@@ -40,7 +40,15 @@ const app = new Vue({
             [..."ASDFGHJKL"],
             ["ENTER", ..."ZXCVBNM", "⌫ "],
         ],
+        dictionaries: [
+            { name: 'Dutch', id: 'nl-nl-5' },
+            { name: 'English', id: 'en-us-5' },
+            { name: 'Romanian', id: 'ro-ro-5' },
+            { name: 'Swedish', id: 'sv-se-5' }
+        ],
 
+        queryStringParams: queryStringParams,
+        
         gameState: undefined,
         error: undefined,
         darkMode: false
@@ -59,9 +67,10 @@ const app = new Vue({
                 })
             });
             const newGameData = await response.json();
-            const {id, totalAttempts, wordLength} = newGameData;
+            const {id, totalAttempts, wordLength, dictName} = newGameData;
             this.gameState = {
                 id,
+                dictName,
                 totalAttempts,
                 wordLength,
                 currentAttempt: 0,
@@ -233,8 +242,55 @@ const app = new Vue({
                 body.classList.remove("dark");
             }
             document.cookie = `darkMode=${this.darkMode}`;
-        }
+        },
 
+        shareResults: function() {
+            const emojiMap = {
+                'correct': '🟩',
+                'present': '🟨'
+            };
+            const absentEmoji = this.darkMode ? '⬛' : '⬜';
+
+            let emojiGrid = "";
+            let finalAttemptCount = 0;
+
+            if (this.gameState && this.gameState.board) {
+                for (let i = 0; i < this.gameState.board.length; i++) {
+                    const row = this.gameState.board[i];
+                    
+                    if (row[0] && row[0].result !== undefined) {
+                        finalAttemptCount++;
+                        
+                        for (let tile of row) {
+                            emojiGrid += emojiMap[tile.result] || absentEmoji;
+                        }
+                        emojiGrid += "\n";
+                    }
+                }
+            }
+            
+            const maxAttempts = this.gameState.totalAttempts || 5;
+            const scoreText = this.gameState.won ? `${finalAttemptCount}/${maxAttempts}` : `X/${maxAttempts}`;
+
+            const currentDomain = window.location.hostname; 
+            const shareText = `${currentDomain} ${scoreText}\n${emojiGrid}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Word Mastermind',
+                    text: shareText
+                })
+                .catch((error) => console.log('Error sharing:', error));
+            } else {
+                navigator.clipboard.writeText(shareText)
+                    .then(() => {
+                        alert("Results copied to clipboard! 📋");
+                    })
+                    .catch(err => {
+                        console.error("Could not copy text: ", err);
+                    });
+            }
+        }
     },
 
     mounted: function() {

@@ -20,12 +20,16 @@ fastify.register(fastifyStatic, {
 
 fastify.post("/game/start", (req, res) => {
     const {dictName} = req.body
-    const dictionary = dictionaries.get(dictName) || defaultDictionary;
+    const resolvedDictName = (dictName && dictionaries.has(dictName)) 
+        ? dictName 
+        : (process.env.DEFAULT_DICTIONARY || "en-us-5");
+    const dictionary = dictionaries.get(resolvedDictName);
     const game = new Game(dictionary, gameOptions)
     const id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10)
     gamesById.set(id, game)
     return {
         id,
+        dictName: resolvedDictName,
         ...game.start()
     }
 })
@@ -50,7 +54,15 @@ fastify.post("/game/submit", (req, res) => {
 const start = async () => {
     try {
         dictionaries = await Dictionary.getAllAvailableDictionaries()
-        defaultDictionary = dictionaries.get("en-us-5")
+        
+        const defaultDictName = process.env.DEFAULT_DICTIONARY || "en-us-5"
+        defaultDictionary = dictionaries.get(defaultDictName)
+        
+        if (!defaultDictionary) {
+            fastify.log.warn(`Dictionary '${defaultDictName}' not found. Falling back to 'en-us-5'.`)
+            defaultDictionary = dictionaries.get("en-us-5")
+        }
+
         console.log("Current dictionaries: " + [...dictionaries.keys()])
 
         const port = process.env.PORT || 3333

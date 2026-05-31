@@ -17,7 +17,13 @@
             >
             <div class="header">
                 <h1>Word Mastermind</h1>
-
+                <div class="dict-selector">
+                    <a v-for="dict in dictionaries"
+                       v-bind:href="'?dictName=' + dict.id"
+                       v-bind:class="{ active: gameState && gameState.dictName === dict.id }">
+                       {{ dict.name }}
+                    </a>
+                </div>
                 <div v-on:click="toggleDarkMode">
                     <div v-if="darkMode">
                         <i class="bi bi-brightness-high" title="Disable Dark Mode"></i>
@@ -72,6 +78,9 @@
                 </div>
 
                 <hr />
+                <button class="btn btn-success" @click="shareResults">
+                    Share Results
+                </button>
                 <button
                     class="btn btn-primary"
                     v-on:click="startGame">
