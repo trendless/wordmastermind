@@ -258,7 +258,7 @@ const app = new Vue({
                 for (let i = 0; i < this.gameState.board.length; i++) {
                     const row = this.gameState.board[i];
                     
-                    if (row[0] && row[0].result !== undefined) {
+                    if (row[0] && row[0].letter !== undefined) {
                         finalAttemptCount++;
                         
                         for (let tile of row) {
@@ -273,7 +273,7 @@ const app = new Vue({
             const scoreText = this.gameState.won ? `${finalAttemptCount}/${maxAttempts}` : `X/${maxAttempts}`;
 
             const currentDomain = window.location.hostname; 
-            const shareText = `${currentDomain} ${scoreText}\n${emojiGrid}`;
+            const shareText = `${currentDomain}\n${scoreText}\n${emojiGrid}`;
 
             if (navigator.share) {
                 navigator.share({
